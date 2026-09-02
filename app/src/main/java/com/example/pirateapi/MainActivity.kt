@@ -21,11 +21,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PirateAPITheme {
+            PirateAPITheme() {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    // Pass the singleton Retrofit API instance into the screen
                     TreasureHuntScreen(apiService = RetrofitClient.api)
                 }
             }
@@ -35,17 +36,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun TreasureHuntScreen(apiService: PirateApiService) {
-    // ANDROID CLUE 1: The crew's memory washes away with every wave of Recomposition!
-    // Wrap these variables in 'remember { mutableStateOf(...) }' so the UI can hold onto the treasure, errors, and digging status.
     var treasureData by remember { mutableStateOf<Treasure?>(null) }
-    var isDigging by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isDigging by remember { mutableStateOf(false) }
 
-    // ANDROID CLUE 2: The Captain needs a secret text field state to hold the passcode!
-    // Initialize a state variable for 'passcodeInput' here (hint: mutableStateOf("")).
+    // 1. ADD STATE FOR THE PASSCODE INPUT
     var passcodeInput by remember { mutableStateOf("") }
-    // ANDROID CLUE 3: Ye need a CoroutineScope to launch suspend functions from a Composable.
-    // Initialize a 'rememberCoroutineScope()' here.
+
     val coroutineScope = rememberCoroutineScope()
 
     Surface(
@@ -60,7 +57,10 @@ fun TreasureHuntScreen(apiService: PirateApiService) {
             verticalArrangement = Arrangement.Center
         ) {
             if (treasureData != null) {
-                Text(text = "🏴‍☠️ Treasure Found! 🏴‍☠️", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    text = "🏴‍☠️ Treasure Found! 🏴‍☠️",
+                    style = MaterialTheme.typography.headlineMedium
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = "Coordinates: ${treasureData!!.coordinates}")
                 Spacer(modifier = Modifier.height(8.dp))
@@ -68,19 +68,25 @@ fun TreasureHuntScreen(apiService: PirateApiService) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = "Booty: ${treasureData!!.goldCoins} Gold Coins")
             } else if (errorMessage != null) {
-                Text(text = "Avast! Error: $errorMessage", color = MaterialTheme.colorScheme.error)
+                Text(
+                    text = "Avast! Error: $errorMessage",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyLarge
+                )
             } else {
-                Text(text = "X marks the spot. Enter the Secret Passcode:", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = "X marks the spot. Enter the Secret Passcode:",
+                    style = MaterialTheme.typography.bodyLarge
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ANDROID CLUE 4: Build an OutlinedTextField here where the crew can type their secret passcode.
-                // Bind its value to your passcodeInput state!
+                // 2. ADD THE TEXT FIELD FOR USERS TO TYPE THE PASSCODE
                 OutlinedTextField(
                     value = passcodeInput,
                     onValueChange = { passcodeInput = it },
                     label = { Text("Secret Passcode") },
-                    modifier = Modifier.fillMaxWidth()
+                    singleLine = true
                 )
             }
 
@@ -91,11 +97,11 @@ fun TreasureHuntScreen(apiService: PirateApiService) {
                     isDigging = true
                     errorMessage = null
 
-                    // ANDROID CLUE 5: We can't chart a course on the main deck!
-                    // Launch your coroutine scope here to safely execute the network request off the main thread.
                     coroutineScope.launch {
                         try {
+                            // 3. PASS THE TYPED PASSCODE INTO THE API CALL
                             val response = apiService.unearthTreasure(passcode = passcodeInput)
+
                             if (response.isSuccessful && response.body() != null) {
                                 treasureData = response.body()
                             } else {
@@ -108,8 +114,7 @@ fun TreasureHuntScreen(apiService: PirateApiService) {
                         }
                     }
                 },
-                // ANDROID CLUE 6: Disable the button while digging OR if the passcode box is empty!
-                enabled = !isDigging && passcodeInput.isNotBlank()
+                enabled = !isDigging && passcodeInput.isNotBlank() // Disable if empty
             ) {
                 Text(if (isDigging) "Digging..." else "Dig for Treasure")
             }

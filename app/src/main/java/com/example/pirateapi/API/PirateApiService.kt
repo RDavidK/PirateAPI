@@ -21,7 +21,7 @@ object RetrofitClient {
         Retrofit.Builder()
             // NETWORK CLUE 3: Point the spyglass to the correct harbor!
             // Fill in the base URL string pointing to your local API endpoint (remembering the trailing slash).
-            .baseUrl("")
+            .baseUrl("http://10.115.233.240:5132/api/TreasureMap/")
 
             // NETWORK CLUE 4: Retrofit doesn't understand raw JSON text by default.
             // What factory do we add here to automatically convert JSON into our Treasure data class?
